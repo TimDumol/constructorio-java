@@ -2023,6 +2023,9 @@ public class ConstructorIO {
     /**
      * Queries the recommendations service to retrieve results for every pod on a page.
      *
+     * <p>Beta: available to a small group of users and may change. Contact your Customer Success
+     * Manager to request access.
+     *
      * <p>The top-level result id of the response identifies the page request and is not a tracking
      * id: send each pod's own result id with that pod's tracking events.
      *
