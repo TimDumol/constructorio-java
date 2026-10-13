@@ -4,8 +4,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Constructor.io Recommendation Page Pod Override. Values set here replace (are not merged with)
- * the page-wide values for one pod.
+ * Constructor.io Recommendation Page Pod Override. Each value set here replaces (is not merged
+ * with) the page-wide value for one pod. Format options and hidden fields are sent together, so
+ * setting either one replaces both page-wide values for that pod.
  */
 public class RecommendationPagePodOverride {
 
@@ -18,7 +19,7 @@ public class RecommendationPagePodOverride {
     private List<String> hiddenFields;
 
     /**
-     * @param numResults the number of results to return for this pod
+     * @param numResults the number of results to return
      */
     public void setNumResults(Integer numResults) {
         this.numResults = numResults;
@@ -32,7 +33,7 @@ public class RecommendationPagePodOverride {
     }
 
     /**
-     * @param facets the filters for this pod. Replaces all page-wide filters for this pod.
+     * @param facets the filters
      */
     public void setFacets(Map<String, List<String>> facets) {
         this.facets = facets;
@@ -61,8 +62,8 @@ public class RecommendationPagePodOverride {
     }
 
     /**
-     * @param preFilterExpression the faceting expression to scope this pod's results (JSON-encoded
-     *     query string)
+     * @param preFilterExpression the faceting expression to scope results (JSON-encoded query
+     *     string)
      */
     public void setPreFilterExpression(String preFilterExpression) {
         this.preFilterExpression = preFilterExpression;
@@ -76,7 +77,7 @@ public class RecommendationPagePodOverride {
     }
 
     /**
-     * @param variationsMap the variationsMap for this pod
+     * @param variationsMap the variations map
      */
     public void setVariationsMap(VariationsMap variationsMap) {
         this.variationsMap = variationsMap;
@@ -90,7 +91,7 @@ public class RecommendationPagePodOverride {
     }
 
     /**
-     * @param formatOptions the format options for this pod
+     * @param formatOptions the format options
      */
     public void setFormatOptions(Map<String, String> formatOptions) {
         this.formatOptions = formatOptions;
@@ -104,7 +105,7 @@ public class RecommendationPagePodOverride {
     }
 
     /**
-     * @param hiddenFields the hidden fields to return for this pod
+     * @param hiddenFields the hidden fields to return
      */
     public void setHiddenFields(List<String> hiddenFields) {
         this.hiddenFields = hiddenFields;

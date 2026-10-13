@@ -1947,26 +1947,10 @@ public class ConstructorIO {
                             .addQueryParameter("section", req.getSection())
                             .build();
 
-            if (req.getItemIds() != null) {
-                for (String itemId : req.getItemIds()) {
-                    url = url.newBuilder().addQueryParameter("item_id", itemId).build();
-                }
-            }
-
-            if (StringUtils.isNotBlank(req.getVariationId())) {
-                if (req.getItemIds() == null || req.getItemIds().size() != 1) {
-                    throw new IllegalArgumentException(
-                            "variationId requires exactly one itemId to be specified");
-                }
-                url =
-                        url.newBuilder()
-                                .addQueryParameter("variation_id", req.getVariationId())
-                                .build();
-            }
-
-            if (StringUtils.isNotBlank(req.getTerm())) {
-                url = url.newBuilder().addQueryParameter("term", req.getTerm()).build();
-            }
+            HttpUrl.Builder itemBuilder = url.newBuilder();
+            addRecommendationItemParameters(
+                    itemBuilder, req.getItemIds(), req.getVariationId(), req.getTerm());
+            url = itemBuilder.build();
 
             if (req.getFacets() != null) {
                 for (String facetName : req.getFacets().keySet()) {
@@ -2047,6 +2031,9 @@ public class ConstructorIO {
     /**
      * Queries the recommendations service to retrieve results for every pod on a page.
      *
+     * <p>Beta: available to a small group of users and may change. Contact your Customer Success
+     * Manager to request access.
+     *
      * @param req the recommendation page request
      * @param userInfo optional information about the user
      * @return a string of JSON
@@ -2063,35 +2050,27 @@ public class ConstructorIO {
                 builder.addQueryParameter("section", req.getSection());
             }
 
-            if (req.getItemIds() != null) {
-                for (String itemId : req.getItemIds()) {
-                    builder.addQueryParameter("item_id", itemId);
-                }
-            }
-
-            if (StringUtils.isNotBlank(req.getVariationId())) {
-                if (req.getItemIds() == null || req.getItemIds().size() != 1) {
-                    throw new IllegalArgumentException(
-                            "variationId requires exactly one itemId to be specified");
-                }
-                builder.addQueryParameter("variation_id", req.getVariationId());
-            }
-
-            if (StringUtils.isNotBlank(req.getTerm())) {
-                builder.addQueryParameter("term", req.getTerm());
-            }
-
+            addRecommendationItemParameters(
+                    builder, req.getItemIds(), req.getVariationId(), req.getTerm());
             addRecommendationPageOverridableParameters(builder, "", req);
 
             if (req.getPodOverrides() != null) {
                 for (Map.Entry<String, RecommendationPagePodOverride> override :
                         req.getPodOverrides().entrySet()) {
-                    if (override.getValue() != null) {
-                        addRecommendationPageOverridableParameters(
-                                builder,
-                                "pod_overrides[" + override.getKey() + "]",
-                                override.getValue());
+                    if (override.getValue() == null) {
+                        continue;
                     }
+                    if (override.getValue() instanceof RecommendationPageRequest) {
+                        throw new IllegalArgumentException(
+                                "podOverrides."
+                                        + override.getKey()
+                                        + " must be a RecommendationPagePodOverride, not a"
+                                        + " RecommendationPageRequest");
+                    }
+                    addRecommendationPageOverridableParameters(
+                            builder,
+                            "pod_overrides[" + override.getKey() + "]",
+                            override.getValue());
                 }
             }
 
@@ -2102,6 +2081,27 @@ public class ConstructorIO {
             return getResponseBody(response);
         } catch (Exception exception) {
             throw new ConstructorException(exception);
+        }
+    }
+
+    private static void addRecommendationItemParameters(
+            HttpUrl.Builder builder, List<String> itemIds, String variationId, String term) {
+        if (itemIds != null) {
+            for (String itemId : itemIds) {
+                builder.addQueryParameter("item_id", itemId);
+            }
+        }
+
+        if (StringUtils.isNotBlank(variationId)) {
+            if (itemIds == null || itemIds.size() != 1) {
+                throw new IllegalArgumentException(
+                        "variationId requires exactly one itemId to be specified");
+            }
+            builder.addQueryParameter("variation_id", variationId);
+        }
+
+        if (StringUtils.isNotBlank(term)) {
+            builder.addQueryParameter("term", term);
         }
     }
 

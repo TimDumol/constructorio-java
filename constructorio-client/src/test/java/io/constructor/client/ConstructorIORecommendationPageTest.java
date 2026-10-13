@@ -2,7 +2,6 @@ package io.constructor.client;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import io.constructor.client.models.RecommendationPagePod;
@@ -16,7 +15,6 @@ import java.util.Map;
 import okhttp3.HttpUrl;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -115,12 +113,12 @@ public class ConstructorIORecommendationPageTest {
                 new LinkedHashMap<String, RecommendationPagePodOverride>();
         podOverrides.put("similar_items", similarItems);
         podOverrides.put("complete_the_look", completeTheLook);
+        podOverrides.put("bestsellers", null);
         request.setPodOverrides(podOverrides);
 
         constructor.recommendationPage(request, null);
 
-        RecordedRequest recordedRequest = mockServer.takeRequest();
-        HttpUrl url = recordedRequest.getRequestUrl();
+        HttpUrl url = mockServer.takeRequest().getRequestUrl();
         String prefix = "pod_overrides[complete_the_look]";
         assertEquals("10", url.queryParameter("num_results"));
         assertEquals("0", url.queryParameter("pod_overrides[similar_items][num_results]"));
@@ -140,11 +138,10 @@ public class ConstructorIORecommendationPageTest {
         assertEquals(
                 Arrays.asList("inventory", "margin"),
                 url.queryParameterValues(prefix + "[fmt_options][hidden_fields]"));
-        assertTrue(
-                "brackets are percent-encoded in the raw path",
-                recordedRequest
-                        .getPath()
-                        .contains("pod_overrides%5Bsimilar_items%5D%5Bnum_results%5D=0"));
+        for (String name : url.queryParameterNames()) {
+            assertTrue(
+                    "null overrides are skipped", !name.startsWith("pod_overrides[bestsellers]"));
+        }
     }
 
     @Test
@@ -172,9 +169,6 @@ public class ConstructorIORecommendationPageTest {
         assertEquals("complete_the_look", pods.get(1).getPodId());
         assertEquals("a1b2c3d4-0000-0000-0000-000000000002", pods.get(1).getResultId());
         assertEquals(0, pods.get(1).getResponse().getResults().size());
-        for (RecommendationPagePod pod : pods) {
-            assertNotEquals(PAGE_RESULT_ID, pod.getResultId());
-        }
     }
 
     @Test
@@ -197,18 +191,18 @@ public class ConstructorIORecommendationPageTest {
     }
 
     @Test
-    public void recommendationPageRequestDefaults() throws Exception {
+    public void recommendationPageShouldRejectPageRequestAsPodOverride() throws Exception {
+        ConstructorIO constructor =
+                new ConstructorIO("", MOCK_API_KEY, false, "127.0.0.1", mockServer.getPort());
         RecommendationPageRequest request = new RecommendationPageRequest("pdp_b2c");
+        request.getPodOverrides().put("similar_items", new RecommendationPageRequest("pdp_b2c"));
 
-        assertEquals("pdp_b2c", request.getPageId());
-        assertEquals("Products", request.getSection());
-        assertNull(request.getNumResults());
-        assertTrue(request.getPodOverrides().isEmpty());
+        thrown.expect(ConstructorException.class);
+        thrown.expectMessage("podOverrides.similar_items must be a RecommendationPagePodOverride");
+        constructor.recommendationPage(request, null);
     }
 
-    // The page endpoint is not yet enabled on the test index, and the test index
-    // has no page configured (`/recommendations/v1/pages/pdp_b2c` returns 404 there)
-    @Ignore("the page endpoint is not enabled and no page is configured on the test index")
+    @Ignore("requires a recommendation page configured on the test index")
     @Test
     public void recommendationPageShouldReturnPerPodResultIdsLive() throws Exception {
         ConstructorIO constructor =

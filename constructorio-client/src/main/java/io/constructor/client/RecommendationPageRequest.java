@@ -104,7 +104,8 @@ public class RecommendationPageRequest extends RecommendationPagePodOverride {
 
     /**
      * @param podOverrides per-pod values keyed by pod id. Each replaces (is not merged with) the
-     *     page-wide value for that pod.
+     *     page-wide value for that pod; setting format options or hidden fields replaces both
+     *     page-wide values for that pod.
      */
     public void setPodOverrides(Map<String, RecommendationPagePodOverride> podOverrides) {
         this.podOverrides = podOverrides;
